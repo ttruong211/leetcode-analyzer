@@ -1,0 +1,83 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id          Int          @id @default(autoincrement())
+  username    String       @unique
+  createdAt   DateTime     @default(now())
+  submissions Submission[]
+}
+
+model Problem {
+  id          Int          @id @default(autoincrement())
+  title       String
+  slug        String       @unique
+  difficulty  Difficulty
+  createdAt   DateTime     @default(now())
+
+  submissions Submission[]
+  topics      ProblemTopic[]
+}
+
+model Topic {
+  id       Int           @id @default(autoincrement())
+  name     String        @unique
+  problems ProblemTopic[]
+}
+
+model ProblemTopic {
+  problemId Int
+  topicId   Int
+
+  problem Problem @relation(fields: [problemId], references: [id])
+  topic   Topic   @relation(fields: [topicId], references: [id])
+
+  @@id([problemId, topicId])
+  @@index([topicId])
+}
+
+model Submission {
+  id          Int              @id @default(autoincrement())
+  userId      Int
+  problemId   Int
+  status      SubmissionStatus
+  language    String?
+  runtimeMs   Int?
+  memoryKb    Int?
+  submittedAt DateTime
+  createdAt   DateTime         @default(now())
+
+  user    User    @relation(fields: [userId], references: [id])
+  problem Problem @relation(fields: [problemId], references: [id])
+
+  @@index([userId])
+  @@index([problemId])
+  @@index([submittedAt])
+}
+
+enum Difficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+enum SubmissionStatus {
+  ACCEPTED
+  WRONG_ANSWER
+  TIME_LIMIT
+  RUNTIME_ERROR
+  COMPILE_ERROR
+  OTHER
+}
+
